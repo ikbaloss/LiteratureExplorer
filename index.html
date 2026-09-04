@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Literature Explorer</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        #network-canvas {
+            height: 720px;
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans relative m-0 p-0 min-h-screen">
+
+    <header class="bg-white border-b border-gray-200 py-4 px-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">📚 Literature Explorer</h1>
+            <div class="flex items-center gap-3 text-xs mt-1">
+                <button id="cite-link-btn" class="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium">
+                    Citing Literature Explorer
+                </button>
+                <span class="text-gray-300">|</span>
+                <button id="prompt-link-btn" class="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium">
+                    Prompt to copy
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-col lg:flex-row min-h-[calc(100vh-73px)]">
+        <!-- Sidebar Controls -->
+        <aside class="w-full lg:w-80 bg-white border-r border-gray-200 p-6 flex flex-col gap-6 shrink-0">
+            <div>
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">📁 Step 1: Upload Data File</h2>
+                <input type="file" id="json-file-input" accept=".json" class="w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+            </div>
+
+            <hr class="border-gray-100">
+
+            <div>
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">🎨 Relationship Legend</h2>
+                <div class="space-y-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-1 bg-blue-500 rounded-full inline-block"></span>
+                        <span class="text-gray-700">Shared Concepts</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-1 bg-emerald-500 rounded-full inline-block"></span>
+                        <span class="text-gray-700">Shared Claims</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-1 bg-amber-500 rounded-full inline-block"></span>
+                        <span class="text-gray-700">Shared Theories</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-1 bg-rose-500 rounded-full inline-block"></span>
+                        <span class="text-gray-700">Contradictory Claims</span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-gray-100">
+
+            <div>
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">⚙️ Canvas Physics</h2>
+                <button id="toggle-physics-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-4 rounded-md text-xs shadow-xs transition cursor-pointer">
+                    Toggle Graph Physics
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <main class="flex-1 p-6 flex flex-col gap-6">
+            <div id="initial-info-prompt" class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-md">
+                <p class="text-sm text-blue-700">Select your JSON graph network file to display the literature relationship network.</p>
+            </div>
+
+            <div id="workspace-container" class="hidden flex-1 flex flex-col gap-6">
+                <div class="w-full">
+                    <div id="network-canvas"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Node Details Modal Popup -->
+    <div id="node-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl border border-gray-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        Node Information
+                    </span>
+                    <h3 class="text-sm font-bold text-gray-800" id="node-modal-title">Publication Details</h3>
+                </div>
+                <button id="close-node-modal-btn" class="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none cursor-pointer">&times;</button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto text-xs space-y-3" id="node-modal-content">
+                <!-- HTML Table metadata content renders here -->
+            </div>
+
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button id="node-modal-ok-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edge Information Popup -->
+    <div id="edge-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl border border-gray-200 max-w-lg w-full overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div class="flex items-center gap-2">
+                    <span id="modal-type-badge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        Relationship
+                    </span>
+                    <h3 class="text-sm font-bold text-gray-800" id="modal-title">Edge Details</h3>
+                </div>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none cursor-pointer">&times;</button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto text-xs space-y-3">
+                <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Connected Works:</span>
+                    <p class="text-sm font-semibold text-gray-800 mt-0.5" id="modal-connection"></p>
+                </div>
+                <hr class="border-gray-100">
+                <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Relationship Details:</span>
+                    <p class="text-gray-700 mt-1 leading-relaxed text-sm bg-gray-50 p-3 rounded-md border border-gray-100" id="modal-content"></p>
+                </div>
+            </div>
+
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button id="modal-ok-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Citation Modal Popup -->
+    <div id="cite-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl border border-gray-200 max-w-lg w-full overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-sm font-bold text-gray-800">Citing Literature Explorer</h3>
+                <button id="close-cite-modal-btn" class="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none cursor-pointer">&times;</button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto text-xs">
+                <p class="text-gray-500 mb-2">Use the following BibTeX entry to cite this software:</p>
+                <textarea id="bibtext-content" readonly class="w-full h-48 p-3 font-mono text-[11px] bg-gray-800 text-green-400 rounded-md border border-gray-700 focus:outline-none resize-none">@software{maulana2026LitEx,
+  author       = {Maulana, Ikbal},
+  title        = {Literature Explorer},
+  year         = {2026},
+  type         = {Computer software},
+  address      = {Jakarta, Indonesia},
+  URL          = {https://ikbaloss.github.io/LiteratureExplorer/},
+  institution  = {National Research and Innovation Agency (BRIN)},
+}</textarea>
+            </div>
+
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                <button id="copy-bibtext-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer flex items-center gap-1">
+                    📋 Copy BibText
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Modal Popup -->
+    <div id="prompt-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl border border-gray-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-sm font-bold text-gray-800">Prompt to Copy</h3>
+                <button id="close-prompt-modal-btn" class="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none cursor-pointer">&times;</button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto text-xs">
+                <p class="text-gray-500 mb-2">Copy this prompt to instruct an AI model to structure research data into compatible JSON:</p>
+                <textarea id="prompt-content" readonly class="w-full h-64 p-3 font-mono text-xs bg-gray-50 text-gray-800 rounded-md border border-gray-300 focus:outline-none resize-none leading-relaxed">Generate a graph represented in JSON format.
+
+**Nodes:** Represent individual sources (e.g., articles, news stories, academic papers). The information extracted as content for a node is title, author, abstract, and main findings. This information is put in a HTML table. The label of node is `label`, while the information of a node, such as title, author, abstract, and main findings is put in `information`.
+**Edges:** Each pair of nodes can be connected by more than one of the following four types: 
+
+1. `shared_concepts`: Topics or terminology common to both sources (e.g., "epistemic injustice"). Each pair of nodes can have more than one shared_concepts or none.
+    
+2. `shared_claims`: Supporting or aligned arguments between sources (e.g., Node A: "social media promotes democratization" vs. Node B: "Instagram enhances democracy"). A pair may share multiple claims.
+    
+3. `contradictory_claims`: Opposing or conflicting arguments between sources (e.g., Node A: "social media promotes democratization" vs. Node B: "Instagram weakens freedom of expression"). A pair may have multiple contradictory claims.
+    
+4. `shared_theories`: Theoretical frameworks applied by both sources (e.g., Habermas’s deliberative democracy).
+
+More than one shared content of the edges will be separated by `;`.</textarea>
+            </div>
+
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                <button id="copy-prompt-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer flex items-center gap-1">
+                    📋 Copy Prompt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            var networkInstance = null;
+            var physicsEnabled = true;
+
+            var jsonFileInput = document.getElementById('json-file-input');
+            var initialPrompt = document.getElementById('initial-info-prompt');
+            var workspaceContainer = document.getElementById('workspace-container');
+            var canvasContainer = document.getElementById('network-canvas');
+            var togglePhysicsBtn = document.getElementById('toggle-physics-btn');
+
+            // Node Modal elements
+            var nodeModal = document.getElementById('node-modal');
+            var closeNodeModalBtn = document.getElementById('close-node-modal-btn');
+            var nodeModalOkBtn = document.getElementById('node-modal-ok-btn');
+            var nodeModalTitle = document.getElementById('node-modal-title');
+            var nodeModalContent = document.getElementById('node-modal-content');
+
+            // Edge Modal elements
+            var edgeModal = document.getElementById('edge-modal');
+            var closeModalBtn = document.getElementById('close-modal-btn');
+            var modalOkBtn = document.getElementById('modal-ok-btn');
+            var modalTypeBadge = document.getElementById('modal-type-badge');
+            var modalTitle = document.getElementById('modal-title');
+            var modalConnection = document.getElementById('modal-connection');
+            var modalContent = document.getElementById('modal-content');
+
+            // Citation Modal elements
+            var citeLinkBtn = document.getElementById('cite-link-btn');
+            var citeModal = document.getElementById('cite-modal');
+            var closeCiteModalBtn = document.getElementById('close-cite-modal-btn');
+            var copyBibtextBtn = document.getElementById('copy-bibtext-btn');
+            var bibtextContent = document.getElementById('bibtext-content');
+
+            // Prompt Modal elements
+            var promptLinkBtn = document.getElementById('prompt-link-btn');
+            var promptModal = document.getElementById('prompt-modal');
+            var closePromptModalBtn = document.getElementById('close-prompt-modal-btn');
+            var copyPromptBtn = document.getElementById('copy-prompt-btn');
+            var promptContent = document.getElementById('prompt-content');
+
+            jsonFileInput.addEventListener('change', handleJsonUpload);
+            togglePhysicsBtn.addEventListener('click', togglePhysics);
+
+            // Node Modal Event Listeners
+            closeNodeModalBtn.addEventListener('click', function() { nodeModal.classList.add('hidden'); });
+            nodeModalOkBtn.addEventListener('click', function() { nodeModal.classList.add('hidden'); });
+
+            // Edge Modal Event Listeners
+            closeModalBtn.addEventListener('click', function() { edgeModal.classList.add('hidden'); });
+            modalOkBtn.addEventListener('click', function() { edgeModal.classList.add('hidden'); });
+
+            // Citation & Prompt Modal Listeners
+            citeLinkBtn.addEventListener('click', function() { citeModal.classList.remove('hidden'); });
+            closeCiteModalBtn.addEventListener('click', function() { citeModal.classList.add('hidden'); });
+
+            promptLinkBtn.addEventListener('click', function() { promptModal.classList.remove('hidden'); });
+            closePromptModalBtn.addEventListener('click', function() { promptModal.classList.add('hidden'); });
+
+            // Copy Buttons
+            copyBibtextBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(bibtextContent.value).then(function() {
+                    copyBibtextBtn.innerText = '✅ Copied!';
+                    setTimeout(function() { copyBibtextBtn.innerText = '📋 Copy BibText'; }, 2000);
+                });
+            });
+
+            copyPromptBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(promptContent.value).then(function() {
+                    copyPromptBtn.innerText = '✅ Copied!';
+                    setTimeout(function() { copyPromptBtn.innerText = '📋 Copy Prompt'; }, 2000);
+                });
+            });
+
+            function showEdgeModal(type, typeColorClass, fromLabel, toLabel, detailText) {
+                modalTypeBadge.className = "px-2 py-0.5 text-xs font-semibold rounded-full " + typeColorClass;
+                modalTypeBadge.innerText = type;
+                modalTitle.innerText = type + " Analysis";
+                modalConnection.innerText = fromLabel + " ↔ " + toLabel;
+                modalContent.innerText = detailText;
+                edgeModal.classList.remove('hidden');
+            }
+
+            function showNodeModal(label, htmlInfo) {
+                nodeModalTitle.innerText = label;
+                nodeModalContent.innerHTML = htmlInfo;
+                nodeModal.classList.remove('hidden');
+            }
+
+            function handleJsonUpload(event) {
+                var file = event.target.files[0];
+                if (!file) return;
+
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        var parsedData = JSON.parse(e.target.result);
+                        if (!parsedData.nodes || !parsedData.edges) {
+                            alert('Invalid structure: File must contain "nodes" and "edges" arrays.');
+                            return;
+                        }
+                        processAndRenderGraph(parsedData);
+                    } catch (err) {
+                        alert('Error reading JSON: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function processAndRenderGraph(rawData) {
+                initialPrompt.classList.add('hidden');
+                workspaceContainer.classList.remove('hidden');
+
+                var labelMap = {};
+
+                var formattedNodes = rawData.nodes.map(function(node) {
+                    labelMap[node.id] = node.label || node.id;
+                    return {
+                        id: node.id,
+                        label: node.label || node.id,
+                        shape: 'dot',
+                        size: 20,
+                        color: { background: '#3b82f6', border: '#1d4ed8' },
+                        font: { size: 12, face: 'sans-serif' },
+                        rawInformation: node.information || '<p>No details available.</p>'
+                    };
+                });
+
+                var formattedEdges = [];
+                var edgeIdCounter = 1;
+
+                rawData.edges.forEach(function(edge) {
+                    var fromId = edge.source || edge.from;
+                    var toId = edge.target || edge.to;
+
+                    if (edge.shared_concepts && edge.shared_concepts.trim() !== "") {
+                        formattedEdges.push({
+                            id: 'edge_' + (edgeIdCounter++),
+                            from: fromId, to: toId,
+                            type: 'Shared Concepts',
+                            badgeStyle: 'bg-blue-100 text-blue-800',
+                            detailText: edge.shared_concepts,
+                            color: { color: '#3b82f6' },
+                            smooth: { type: 'curvedCW', roundness: 0.1 }
+                        });
+                    }
+                    if (edge.shared_claims && edge.shared_claims.trim() !== "") {
+                        formattedEdges.push({
+                            id: 'edge_' + (edgeIdCounter++),
+                            from: fromId, to: toId,
+                            type: 'Shared Claims',
+                            badgeStyle: 'bg-emerald-100 text-emerald-800',
+                            detailText: edge.shared_claims,
+                            color: { color: '#10b981' },
+                            smooth: { type: 'curvedCW', roundness: 0.2 }
+                        });
+                    }
+                    if (edge.shared_theories && edge.shared_theories.trim() !== "") {
+                        formattedEdges.push({
+                            id: 'edge_' + (edgeIdCounter++),
+                            from: fromId, to: toId,
+                            type: 'Shared Theories',
+                            badgeStyle: 'bg-amber-100 text-amber-800',
+                            detailText: edge.shared_theories,
+                            color: { color: '#f59e0b' },
+                            smooth: { type: 'curvedCW', roundness: 0.3 }
+                        });
+                    }
+                    if (edge.contradictory_claims && edge.contradictory_claims.trim() !== "") {
+                        formattedEdges.push({
+                            id: 'edge_' + (edgeIdCounter++),
+                            from: fromId, to: toId,
+                            type: 'Contradictory Claims',
+                            badgeStyle: 'bg-rose-100 text-rose-800',
+                            detailText: edge.contradictory_claims,
+                            color: { color: '#f43f5e' },
+                            smooth: { type: 'curvedCW', roundness: 0.4 }
+                        });
+                    }
+                });
+
+                var nodesDataSet = new vis.DataSet(formattedNodes);
+                var edgesDataSet = new vis.DataSet(formattedEdges);
+
+                var data = { nodes: nodesDataSet, edges: edgesDataSet };
+
+                var options = {
+                    nodes: { borderWidth: 2 },
+                    edges: { width: 3, selectionWidth: 5 },
+                    physics: {
+                        enabled: physicsEnabled,
+                        barnesHut: { gravitationalConstant: -3000, springLength: 120 }
+                    },
+                    interaction: { hover: true }
+                };
+
+                if (networkInstance !== null) {
+                    networkInstance.destroy();
+                }
+
+                networkInstance = new vis.Network(canvasContainer, data, options);
+
+                // Handle Node Click -> Show Node Details Modal
+                networkInstance.on('selectNode', function(params) {
+                    var selectedId = params.nodes[0];
+                    var selectedNode = nodesDataSet.get(selectedId);
+                    if (selectedNode) {
+                        showNodeModal(selectedNode.label, selectedNode.rawInformation);
+                    }
+                });
+
+                // Handle Edge Click -> Show Edge Details Modal
+                networkInstance.on('click', function(params) {
+                    if (params.nodes.length === 0 && params.edges.length > 0) {
+                        var clickedEdgeId = params.edges[0];
+                        var edgeData = edgesDataSet.get(clickedEdgeId);
+
+                        if (edgeData) {
+                            var fromLabel = labelMap[edgeData.from] || edgeData.from;
+                            var toLabel = labelMap[edgeData.to] || edgeData.to;
+
+                            showEdgeModal(
+                                edgeData.type,
+                                edgeData.badgeStyle,
+                                fromLabel,
+                                toLabel,
+                                edgeData.detailText
+                            );
+                        }
+                    }
+                });
+            }
+
+            function togglePhysics() {
+                if (!networkInstance) return;
+                physicsEnabled = !physicsEnabled;
+                networkInstance.setOptions({ physics: { enabled: physicsEnabled } });
+            }
+        })();
+    </script>
+</body>
+</html>
