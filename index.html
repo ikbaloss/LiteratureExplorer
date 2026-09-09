@@ -206,10 +206,23 @@ Store the result in json file.</textarea>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { reactive, watch } from 'https://cdn.jsdelivr.net/npm/@arrow-js/core@1.0.0-alpha.9/+esm';
+
         (function() {
             var networkInstance = null;
-            var physicsEnabled = true;
+
+            // Define ArrowJS reactive state
+            var state = reactive({
+                hasData: false,
+                physicsEnabled: true,
+                nodeModalOpen: false,
+                edgeModalOpen: false,
+                citeModalOpen: false,
+                promptModalOpen: false,
+                copyBibTextText: '📋 Copy BibText',
+                copyPromptText: '📋 Copy Prompt'
+            });
 
             var jsonFileInput = document.getElementById('json-file-input');
             var initialPrompt = document.getElementById('initial-info-prompt');
@@ -233,50 +246,87 @@ Store the result in json file.</textarea>
             var modalConnection = document.getElementById('modal-connection');
             var modalContent = document.getElementById('modal-content');
 
-            // Citation Modal elements
+            // Citation & Prompt Modal elements
             var citeLinkBtn = document.getElementById('cite-link-btn');
             var citeModal = document.getElementById('cite-modal');
             var closeCiteModalBtn = document.getElementById('close-cite-modal-btn');
             var copyBibtextBtn = document.getElementById('copy-bibtext-btn');
             var bibtextContent = document.getElementById('bibtext-content');
 
-            // Prompt Modal elements
             var promptLinkBtn = document.getElementById('prompt-link-btn');
             var promptModal = document.getElementById('prompt-modal');
             var closePromptModalBtn = document.getElementById('close-prompt-modal-btn');
             var copyPromptBtn = document.getElementById('copy-prompt-btn');
             var promptContent = document.getElementById('prompt-content');
 
+            // Watch reactive state to update DOM classes and button texts seamlessly using ArrowJS reactivity
+            watch(() => {
+                if (state.hasData) {
+                    initialPrompt.classList.add('hidden');
+                    workspaceContainer.classList.remove('hidden');
+                } else {
+                    initialPrompt.classList.remove('hidden');
+                    workspaceContainer.classList.add('hidden');
+                }
+
+                if (state.nodeModalOpen) {
+                    nodeModal.classList.remove('hidden');
+                } else {
+                    nodeModal.classList.add('hidden');
+                }
+
+                if (state.edgeModalOpen) {
+                    edgeModal.classList.remove('hidden');
+                } else {
+                    edgeModal.classList.add('hidden');
+                }
+
+                if (state.citeModalOpen) {
+                    citeModal.classList.remove('hidden');
+                } else {
+                    citeModal.classList.add('hidden');
+                }
+
+                if (state.promptModalOpen) {
+                    promptModal.classList.remove('hidden');
+                } else {
+                    promptModal.classList.add('hidden');
+                }
+
+                copyBibtextBtn.innerText = state.copyBibTextText;
+                copyPromptBtn.innerText = state.copyPromptText;
+            });
+
             jsonFileInput.addEventListener('change', handleJsonUpload);
             togglePhysicsBtn.addEventListener('click', togglePhysics);
 
             // Node Modal Event Listeners
-            closeNodeModalBtn.addEventListener('click', function() { nodeModal.classList.add('hidden'); });
-            nodeModalOkBtn.addEventListener('click', function() { nodeModal.classList.add('hidden'); });
+            closeNodeModalBtn.addEventListener('click', function() { state.nodeModalOpen = false; });
+            nodeModalOkBtn.addEventListener('click', function() { state.nodeModalOpen = false; });
 
             // Edge Modal Event Listeners
-            closeModalBtn.addEventListener('click', function() { edgeModal.classList.add('hidden'); });
-            modalOkBtn.addEventListener('click', function() { edgeModal.classList.add('hidden'); });
+            closeModalBtn.addEventListener('click', function() { state.edgeModalOpen = false; });
+            modalOkBtn.addEventListener('click', function() { state.edgeModalOpen = false; });
 
             // Citation & Prompt Modal Listeners
-            citeLinkBtn.addEventListener('click', function() { citeModal.classList.remove('hidden'); });
-            closeCiteModalBtn.addEventListener('click', function() { citeModal.classList.add('hidden'); });
+            citeLinkBtn.addEventListener('click', function() { state.citeModalOpen = true; });
+            closeCiteModalBtn.addEventListener('click', function() { state.citeModalOpen = false; });
 
-            promptLinkBtn.addEventListener('click', function() { promptModal.classList.remove('hidden'); });
-            closePromptModalBtn.addEventListener('click', function() { promptModal.classList.add('hidden'); });
+            promptLinkBtn.addEventListener('click', function() { state.promptModalOpen = true; });
+            closePromptModalBtn.addEventListener('click', function() { state.promptModalOpen = false; });
 
             // Copy Buttons
             copyBibtextBtn.addEventListener('click', function() {
                 navigator.clipboard.writeText(bibtextContent.value).then(function() {
-                    copyBibtextBtn.innerText = '✅ Copied!';
-                    setTimeout(function() { copyBibtextBtn.innerText = '📋 Copy BibText'; }, 2000);
+                    state.copyBibTextText = '✅ Copied!';
+                    setTimeout(function() { state.copyBibTextText = '📋 Copy BibText'; }, 2000);
                 });
             });
 
             copyPromptBtn.addEventListener('click', function() {
                 navigator.clipboard.writeText(promptContent.value).then(function() {
-                    copyPromptBtn.innerText = '✅ Copied!';
-                    setTimeout(function() { copyPromptBtn.innerText = '📋 Copy Prompt'; }, 2000);
+                    state.copyPromptText = '✅ Copied!';
+                    setTimeout(function() { state.copyPromptText = '📋 Copy Prompt'; }, 2000);
                 });
             });
 
@@ -286,13 +336,13 @@ Store the result in json file.</textarea>
                 modalTitle.innerText = type + " Analysis";
                 modalConnection.innerText = fromLabel + " ↔ " + toLabel;
                 modalContent.innerText = detailText;
-                edgeModal.classList.remove('hidden');
+                state.edgeModalOpen = true;
             }
 
             function showNodeModal(label, htmlInfo) {
                 nodeModalTitle.innerText = label;
                 nodeModalContent.innerHTML = htmlInfo;
-                nodeModal.classList.remove('hidden');
+                state.nodeModalOpen = true;
             }
 
             function handleJsonUpload(event) {
@@ -316,8 +366,7 @@ Store the result in json file.</textarea>
             }
 
             function processAndRenderGraph(rawData) {
-                initialPrompt.classList.add('hidden');
-                workspaceContainer.classList.remove('hidden');
+                state.hasData = true;
 
                 var labelMap = {};
 
@@ -396,7 +445,7 @@ Store the result in json file.</textarea>
                     nodes: { borderWidth: 2 },
                     edges: { width: 3, selectionWidth: 5 },
                     physics: {
-                        enabled: physicsEnabled,
+                        enabled: state.physicsEnabled,
                         barnesHut: { gravitationalConstant: -3000, springLength: 120 }
                     },
                     interaction: { hover: true }
@@ -441,8 +490,8 @@ Store the result in json file.</textarea>
 
             function togglePhysics() {
                 if (!networkInstance) return;
-                physicsEnabled = !physicsEnabled;
-                networkInstance.setOptions({ physics: { enabled: physicsEnabled } });
+                state.physicsEnabled = !state.physicsEnabled;
+                networkInstance.setOptions({ physics: { enabled: state.physicsEnabled } });
             }
         })();
     </script>
