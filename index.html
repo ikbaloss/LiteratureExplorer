@@ -46,22 +46,35 @@
             <div>
                 <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">🎨 Relationship Legend</h2>
                 <div class="space-y-2 text-xs">
-                    <div class="flex items-center gap-2">
+                    <div id="legend-concepts-btn" class="flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-1.5 rounded transition group">
                         <span class="w-4 h-1 bg-blue-500 rounded-full inline-block"></span>
-                        <span class="text-gray-700">Shared Concepts</span>
+                        <span class="text-blue-600 group-hover:underline font-medium">Shared Concepts (Clickable)</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 p-1.5">
                         <span class="w-4 h-1 bg-emerald-500 rounded-full inline-block"></span>
                         <span class="text-gray-700">Shared Claims</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div id="legend-theories-btn" class="flex items-center gap-2 cursor-pointer hover:bg-amber-50 p-1.5 rounded transition group">
                         <span class="w-4 h-1 bg-amber-500 rounded-full inline-block"></span>
-                        <span class="text-gray-700">Shared Theories</span>
+                        <span class="text-amber-600 group-hover:underline font-medium">Shared Theories (Clickable)</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 p-1.5">
                         <span class="w-4 h-1 bg-rose-500 rounded-full inline-block"></span>
                         <span class="text-gray-700">Contradictory Claims</span>
                     </div>
+                </div>
+            </div>
+
+            <hr class="border-gray-100">
+
+            <!-- Search Claim Feature -->
+            <div>
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">🔍 Search Claim</h2>
+                <div class="flex flex-col gap-2">
+                    <input type="text" id="claim-search-input" placeholder="e.g. javan* or *beral" class="w-full text-xs px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <button id="search-claim-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 px-4 rounded-md text-xs shadow-xs transition cursor-pointer">
+                        Search Claim
+                    </button>
                 </div>
             </div>
 
@@ -90,7 +103,7 @@
     </div>
 
     <!-- Node Details Modal Popup -->
-    <div id="node-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div id="node-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-60 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg shadow-xl border border-gray-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[85vh]">
             <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <div class="flex items-center gap-2">
@@ -102,9 +115,7 @@
                 <button id="close-node-modal-btn" class="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none cursor-pointer">&times;</button>
             </div>
             
-            <div class="p-5 overflow-y-auto text-xs space-y-3" id="node-modal-content">
-                <!-- HTML Table metadata content renders here -->
-            </div>
+            <div class="p-5 overflow-y-auto text-xs space-y-3" id="node-modal-content"></div>
 
             <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
                 <button id="node-modal-ok-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer">Close</button>
@@ -127,7 +138,7 @@
             
             <div class="p-5 overflow-y-auto text-xs space-y-3">
                 <div>
-                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Connected Works:</span>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">CONNECTED WORKS:</span>
                     <p class="text-sm font-semibold text-gray-800 mt-0.5" id="modal-connection"></p>
                 </div>
                 <hr class="border-gray-100">
@@ -139,6 +150,49 @@
 
             <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
                 <button id="modal-ok-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend Summary/Drilldown Modal Popup -->
+    <div id="legend-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl border border-gray-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div class="flex items-center gap-2">
+                    <span id="legend-modal-badge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        Overview
+                    </span>
+                    <h3 class="text-sm font-bold text-gray-800" id="legend-modal-title">Legend Analysis</h3>
+                </div>
+                <button id="close-legend-modal-btn" class="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none cursor-pointer">&times;</button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto text-xs space-y-3 flex-1" id="legend-modal-content"></div>
+
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                <button id="legend-back-btn" class="hidden px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs font-medium cursor-pointer">← Back to Table</button>
+                <button id="legend-modal-ok-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer ml-auto">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Claim Results Modal -->
+    <div id="claim-search-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl border border-gray-200 max-w-5xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                        Claim Search Results
+                    </span>
+                    <h3 class="text-sm font-bold text-gray-800" id="claim-search-modal-title">Search Results</h3>
+                </div>
+                <button id="close-claim-search-modal-btn" class="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none cursor-pointer">&times;</button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto text-xs space-y-3 flex-1" id="claim-search-modal-content"></div>
+
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button id="claim-search-modal-ok-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium cursor-pointer">Close</button>
             </div>
         </div>
     </div>
@@ -211,8 +265,12 @@ Store the result in json file.</textarea>
 
         (function() {
             var networkInstance = null;
+            var rawGraphData = null;
+            var conceptMap = {};
+            var theoryMap = {};
+            var nodeStore = {};
+            var allEdgesStore = [];
 
-            // Define ArrowJS reactive state
             var state = reactive({
                 hasData: false,
                 physicsEnabled: true,
@@ -220,6 +278,13 @@ Store the result in json file.</textarea>
                 edgeModalOpen: false,
                 citeModalOpen: false,
                 promptModalOpen: false,
+                legendModalOpen: false,
+                claimSearchModalOpen: false,
+                legendType: '', 
+                sortColumn: 'count', 
+                sortAsc: false, 
+                selectedItem: null, 
+                searchQuery: '',
                 copyBibTextText: '📋 Copy BibText',
                 copyPromptText: '📋 Copy Prompt'
             });
@@ -230,14 +295,20 @@ Store the result in json file.</textarea>
             var canvasContainer = document.getElementById('network-canvas');
             var togglePhysicsBtn = document.getElementById('toggle-physics-btn');
 
-            // Node Modal elements
+            var claimSearchInput = document.getElementById('claim-search-input');
+            var searchClaimBtn = document.getElementById('search-claim-btn');
+            var claimSearchModal = document.getElementById('claim-search-modal');
+            var closeClaimSearchModalBtn = document.getElementById('close-claim-search-modal-btn');
+            var claimSearchModalOkBtn = document.getElementById('claim-search-modal-ok-btn');
+            var claimSearchModalTitle = document.getElementById('claim-search-modal-title');
+            var claimSearchModalContent = document.getElementById('claim-search-modal-content');
+
             var nodeModal = document.getElementById('node-modal');
             var closeNodeModalBtn = document.getElementById('close-node-modal-btn');
             var nodeModalOkBtn = document.getElementById('node-modal-ok-btn');
             var nodeModalTitle = document.getElementById('node-modal-title');
             var nodeModalContent = document.getElementById('node-modal-content');
 
-            // Edge Modal elements
             var edgeModal = document.getElementById('edge-modal');
             var closeModalBtn = document.getElementById('close-modal-btn');
             var modalOkBtn = document.getElementById('modal-ok-btn');
@@ -246,7 +317,16 @@ Store the result in json file.</textarea>
             var modalConnection = document.getElementById('modal-connection');
             var modalContent = document.getElementById('modal-content');
 
-            // Citation & Prompt Modal elements
+            var legendModal = document.getElementById('legend-modal');
+            var closeLegendModalBtn = document.getElementById('close-legend-modal-btn');
+            var legendModalOkBtn = document.getElementById('legend-modal-ok-btn');
+            var legendBackBtn = document.getElementById('legend-back-btn');
+            var legendModalBadge = document.getElementById('legend-modal-badge');
+            var legendModalTitle = document.getElementById('legend-modal-title');
+            var legendModalContent = document.getElementById('legend-modal-content');
+            var legendConceptsBtn = document.getElementById('legend-concepts-btn');
+            var legendTheoriesBtn = document.getElementById('legend-theories-btn');
+
             var citeLinkBtn = document.getElementById('cite-link-btn');
             var citeModal = document.getElementById('cite-modal');
             var closeCiteModalBtn = document.getElementById('close-cite-modal-btn');
@@ -259,7 +339,6 @@ Store the result in json file.</textarea>
             var copyPromptBtn = document.getElementById('copy-prompt-btn');
             var promptContent = document.getElementById('prompt-content');
 
-            // Watch reactive state to update DOM classes and button texts seamlessly using ArrowJS reactivity
             watch(() => {
                 if (state.hasData) {
                     initialPrompt.classList.add('hidden');
@@ -269,28 +348,19 @@ Store the result in json file.</textarea>
                     workspaceContainer.classList.add('hidden');
                 }
 
-                if (state.nodeModalOpen) {
-                    nodeModal.classList.remove('hidden');
-                } else {
-                    nodeModal.classList.add('hidden');
+                nodeModal.classList.toggle('hidden', !state.nodeModalOpen);
+                edgeModal.classList.toggle('hidden', !state.edgeModalOpen);
+                citeModal.classList.toggle('hidden', !state.citeModalOpen);
+                promptModal.classList.toggle('hidden', !state.promptModalOpen);
+                legendModal.classList.toggle('hidden', !state.legendModalOpen);
+                claimSearchModal.classList.toggle('hidden', !state.claimSearchModalOpen);
+
+                if (state.legendModalOpen) {
+                    renderLegendModal();
                 }
 
-                if (state.edgeModalOpen) {
-                    edgeModal.classList.remove('hidden');
-                } else {
-                    edgeModal.classList.add('hidden');
-                }
-
-                if (state.citeModalOpen) {
-                    citeModal.classList.remove('hidden');
-                } else {
-                    citeModal.classList.add('hidden');
-                }
-
-                if (state.promptModalOpen) {
-                    promptModal.classList.remove('hidden');
-                } else {
-                    promptModal.classList.add('hidden');
+                if (state.claimSearchModalOpen) {
+                    renderClaimSearchResults();
                 }
 
                 copyBibtextBtn.innerText = state.copyBibTextText;
@@ -300,22 +370,61 @@ Store the result in json file.</textarea>
             jsonFileInput.addEventListener('change', handleJsonUpload);
             togglePhysicsBtn.addEventListener('click', togglePhysics);
 
-            // Node Modal Event Listeners
+            searchClaimBtn.addEventListener('click', function() {
+                if (!state.hasData) {
+                    alert('Please upload a JSON dataset first.');
+                    return;
+                }
+                state.searchQuery = claimSearchInput.value.trim();
+                state.claimSearchModalOpen = true;
+            });
+
+            closeClaimSearchModalBtn.addEventListener('click', function() { state.claimSearchModalOpen = false; });
+            claimSearchModalOkBtn.addEventListener('click', function() { state.claimSearchModalOpen = false; });
+
+            legendConceptsBtn.addEventListener('click', function() {
+                if (!state.hasData) {
+                    alert('Please upload a JSON dataset first.');
+                    return;
+                }
+                state.legendType = 'concepts';
+                state.sortColumn = 'count';
+                state.sortAsc = false;
+                state.selectedItem = null;
+                state.legendModalOpen = true;
+            });
+
+            legendTheoriesBtn.addEventListener('click', function() {
+                if (!state.hasData) {
+                    alert('Please upload a JSON dataset first.');
+                    return;
+                }
+                state.legendType = 'theories';
+                state.sortColumn = 'count';
+                state.sortAsc = false;
+                state.selectedItem = null;
+                state.legendModalOpen = true;
+            });
+
+            legendBackBtn.addEventListener('click', function() {
+                state.selectedItem = null;
+            });
+
+            closeLegendModalBtn.addEventListener('click', function() { state.legendModalOpen = false; });
+            legendModalOkBtn.addEventListener('click', function() { state.legendModalOpen = false; });
+
             closeNodeModalBtn.addEventListener('click', function() { state.nodeModalOpen = false; });
             nodeModalOkBtn.addEventListener('click', function() { state.nodeModalOpen = false; });
 
-            // Edge Modal Event Listeners
             closeModalBtn.addEventListener('click', function() { state.edgeModalOpen = false; });
             modalOkBtn.addEventListener('click', function() { state.edgeModalOpen = false; });
 
-            // Citation & Prompt Modal Listeners
             citeLinkBtn.addEventListener('click', function() { state.citeModalOpen = true; });
             closeCiteModalBtn.addEventListener('click', function() { state.citeModalOpen = false; });
 
             promptLinkBtn.addEventListener('click', function() { state.promptModalOpen = true; });
             closePromptModalBtn.addEventListener('click', function() { state.promptModalOpen = false; });
 
-            // Copy Buttons
             copyBibtextBtn.addEventListener('click', function() {
                 navigator.clipboard.writeText(bibtextContent.value).then(function() {
                     state.copyBibTextText = '✅ Copied!';
@@ -345,6 +454,255 @@ Store the result in json file.</textarea>
                 state.nodeModalOpen = true;
             }
 
+            function wildcardToRegex(query) {
+                if (!query) return null;
+                var trimmed = query.trim();
+                
+                if (trimmed.startsWith('*') && !trimmed.endsWith('*')) {
+                    var base = trimmed.slice(1).trim();
+                    var escapedBase = base.replace(/([.+^$()[\]{}\|?\\])/g, '\\$1');
+                    var pattern = '\\w*' + escapedBase + '\\b';
+                    try {
+                        return new RegExp(pattern, 'i');
+                    } catch (e) {
+                        return null;
+                    }
+                }
+                
+                if (trimmed.endsWith('*') && !trimmed.startsWith('*')) {
+                    var base = trimmed.slice(0, -1).trim();
+                    var escapedBase = base.replace(/([.+^$()[\]{}\|?\\])/g, '\\$1');
+                    var pattern = '\\b' + escapedBase + '\\w*';
+                    try {
+                        return new RegExp(pattern, 'i');
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
+                var escaped = trimmed.replace(/([.+^$()[\]{}\|?\\])/g, '\\$1');
+                var pattern = '^' + escaped.replace(/\*/g, '.*') + '$';
+                try {
+                    return new RegExp(pattern, 'i');
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function renderClaimSearchResults() {
+                claimSearchModalTitle.innerText = 'Search Results for: "' + (state.searchQuery || '(all)') + '"';
+                var regex = wildcardToRegex(state.searchQuery);
+
+                var matchedSharedClaims = [];
+                var matchedContradictoryClaims = [];
+
+                allEdgesStore.forEach(function(edge) {
+                    var fromId = edge.from || edge.source;
+                    var toId = edge.to || edge.target;
+
+                    var fromNode = nodeStore[fromId];
+                    var toNode = nodeStore[toId];
+                    var fromLabel = fromNode ? fromNode.label : fromId;
+                    var toLabel = toNode ? toNode.label : toId;
+
+                    if (edge.shared_claims && edge.shared_claims.trim() !== "") {
+                        var match = !regex || regex.test(edge.shared_claims) || edge.shared_claims.toLowerCase().includes(state.searchQuery.toLowerCase());
+                        if (match) {
+                            matchedSharedClaims.push({
+                                claimText: edge.shared_claims,
+                                fromId: fromId,
+                                fromLabel: fromLabel,
+                                toId: toId,
+                                toLabel: toLabel
+                            });
+                        }
+                    }
+
+                    if (edge.contradictory_claims && edge.contradictory_claims.trim() !== "") {
+                        var match = !regex || regex.test(edge.contradictory_claims) || edge.contradictory_claims.toLowerCase().includes(state.searchQuery.toLowerCase());
+                        if (match) {
+                            matchedContradictoryClaims.push({
+                                claimText: edge.contradictory_claims,
+                                fromId: fromId,
+                                fromLabel: fromLabel,
+                                toId: toId,
+                                toLabel: toLabel
+                            });
+                        }
+                    }
+                });
+
+                var html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+                
+                // Column 1: Shared Claims
+                html += '<div class="border border-gray-200 rounded-md overflow-hidden flex flex-col bg-white">';
+                html += '<div class="bg-emerald-50 px-4 py-3 border-b border-gray-200 font-bold text-emerald-800 flex justify-between items-center">';
+                html += '<span>Shared Claims</span>';
+                html += '<span class="bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full text-[10px]">' + matchedSharedClaims.length + '</span>';
+                html += '</div>';
+                html += '<div class="p-3 overflow-y-auto space-y-3 flex-1 max-h-[60vh]">';
+
+                if (matchedSharedClaims.length === 0) {
+                    html += '<p class="text-gray-500 text-center py-4">No matching shared claims found.</p>';
+                } else {
+                    matchedSharedClaims.forEach(function(item) {
+                        html += '<div class="p-3 bg-gray-50 border border-gray-200 rounded-md space-y-2">';
+                        html += '<p class="font-semibold text-gray-800">Claim: <span class="font-normal text-gray-700">' + item.claimText + '</span></p>';
+                        html += '<div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-gray-200 text-[11px]">';
+                        html += '<button class="claim-node-link text-blue-600 hover:underline font-medium cursor-pointer" data-id="' + item.fromId + '">📄 ' + item.fromLabel + '</button>';
+                        html += '<span class="text-gray-400">↔</span>';
+                        html += '<button class="claim-node-link text-blue-600 hover:underline font-medium cursor-pointer" data-id="' + item.toId + '">📄 ' + item.toLabel + '</button>';
+                        html += '</div>';
+                        html += '</div>';
+                    });
+                }
+                html += '</div></div>';
+
+                // Column 2: Contradictory Claims
+                html += '<div class="border border-gray-200 rounded-md overflow-hidden flex flex-col bg-white">';
+                html += '<div class="bg-rose-50 px-4 py-3 border-b border-gray-200 font-bold text-rose-800 flex justify-between items-center">';
+                html += '<span>Contradictory Claims</span>';
+                html += '<span class="bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full text-[10px]">' + matchedContradictoryClaims.length + '</span>';
+                html += '</div>';
+                html += '<div class="p-3 overflow-y-auto space-y-3 flex-1 max-h-[60vh]">';
+
+                if (matchedContradictoryClaims.length === 0) {
+                    html += '<p class="text-gray-500 text-center py-4">No matching contradictory claims found.</p>';
+                } else {
+                    matchedContradictoryClaims.forEach(function(item) {
+                        html += '<div class="p-3 bg-gray-50 border border-gray-200 rounded-md space-y-2">';
+                        html += '<p class="font-semibold text-gray-800">Claim: <span class="font-normal text-gray-700">' + item.claimText + '</span></p>';
+                        html += '<div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-gray-200 text-[11px]">';
+                        html += '<button class="claim-node-link text-blue-600 hover:underline font-medium cursor-pointer" data-id="' + item.fromId + '">📄 ' + item.fromLabel + '</button>';
+                        html += '<span class="text-gray-400">↔</span>';
+                        html += '<button class="claim-node-link text-blue-600 hover:underline font-medium cursor-pointer" data-id="' + item.toId + '">📄 ' + item.toLabel + '</button>';
+                        html += '</div>';
+                        html += '</div>';
+                    });
+                }
+                html += '</div></div>';
+
+                html += '</div>';
+                claimSearchModalContent.innerHTML = html;
+
+                var links = claimSearchModalContent.querySelectorAll('.claim-node-link');
+                links.forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        var id = link.getAttribute('data-id');
+                        var nodeObj = nodeStore[id];
+                        if (nodeObj) {
+                            showNodeModal(nodeObj.label, nodeObj.rawInformation);
+                        }
+                    });
+                });
+            }
+
+            function renderLegendModal() {
+                var isConcepts = state.legendType === 'concepts';
+                var map = isConcepts ? conceptMap : theoryMap;
+                var colName = isConcepts ? 'Concept' : 'Theory';
+                var badgeColor = isConcepts ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800';
+
+                legendModalBadge.className = "px-2 py-0.5 text-xs font-semibold rounded-full " + badgeColor;
+                legendModalBadge.innerText = isConcepts ? 'Concepts Overview' : 'Theories Overview';
+
+                if (!state.selectedItem) {
+                    legendBackBtn.classList.add('hidden');
+                    legendModalTitle.innerText = isConcepts ? 'Shared Concepts Frequency' : 'Shared Theories Frequency';
+
+                    var items = Object.keys(map).map(function(name) {
+                        return { name: name, count: map[name].size };
+                    });
+
+                    items.sort(function(a, b) {
+                        if (state.sortColumn === 'name') {
+                            var cmp = a.name.localeCompare(b.name);
+                            return state.sortAsc ? cmp : -cmp;
+                        } else {
+                            var cmp = b.count - a.count;
+                            return state.sortAsc ? -cmp : cmp;
+                        }
+                    });
+
+                    var html = '<table class="w-full border-collapse text-left bg-white border border-gray-200 rounded-md overflow-hidden">';
+                    html += '<thead><tr class="bg-gray-100 border-b border-gray-200 text-gray-700 font-semibold select-none">';
+                    html += '<th id="sort-name-th" class="p-3 cursor-pointer hover:bg-gray-200">' + colName + ' ' + (state.sortColumn === 'name' ? (state.sortAsc ? '▲' : '▼') : '') + '</th>';
+                    html += '<th id="sort-count-th" class="p-3 text-right cursor-pointer hover:bg-gray-200">Number of articles ' + (state.sortColumn === 'count' ? (state.sortAsc ? '▲' : '▼') : '') + '</th>';
+                    html += '</tr></thead><tbody>';
+
+                    if (items.length === 0) {
+                        html += '<tr><td colspan="2" class="p-4 text-center text-gray-500">No ' + colName.toLowerCase() + ' data found in graph edges.</td></tr>';
+                    } else {
+                        items.forEach(function(item) {
+                            html += '<tr class="legend-row hover:bg-blue-50 cursor-pointer border-b border-gray-100 transition" data-item="' + encodeURIComponent(item.name) + '">';
+                            html += '<td class="p-3 font-medium text-gray-800">' + item.name + '</td>';
+                            html += '<td class="p-3 text-right text-gray-600 font-semibold">' + item.count + '</td>';
+                            html += '</tr>';
+                        });
+                    }
+                    html += '</tbody></table>';
+                    legendModalContent.innerHTML = html;
+
+                    document.getElementById('sort-name-th').addEventListener('click', function() {
+                        if (state.sortColumn === 'name') {
+                            state.sortAsc = !state.sortAsc;
+                        } else {
+                            state.sortColumn = 'name';
+                            state.sortAsc = true;
+                        }
+                    });
+                    document.getElementById('sort-count-th').addEventListener('click', function() {
+                        if (state.sortColumn === 'count') {
+                            state.sortAsc = !state.sortAsc;
+                        } else {
+                            state.sortColumn = 'count';
+                            state.sortAsc = false;
+                        }
+                    });
+
+                    var rows = legendModalContent.querySelectorAll('.legend-row');
+                    rows.forEach(function(row) {
+                        row.addEventListener('click', function() {
+                            state.selectedItem = decodeURIComponent(row.getAttribute('data-item'));
+                        });
+                    });
+
+                } else {
+                    legendBackBtn.classList.remove('hidden');
+                    legendModalTitle.innerText = 'Articles sharing "' + state.selectedItem + '"';
+
+                    var nodeIds = map[state.selectedItem] ? Array.from(map[state.selectedItem]) : [];
+                    var html = '<div class="space-y-2">';
+                    html += '<p class="text-gray-500 mb-2">Click any article below to inspect its full publication details:</p>';
+
+                    if (nodeIds.length === 0) {
+                        html += '<p class="text-gray-500">No associated articles found.</p>';
+                    } else {
+                        nodeIds.forEach(function(id) {
+                            var nodeObj = nodeStore[id];
+                            var label = nodeObj ? nodeObj.label : id;
+                            html += '<div class="legend-article-card p-3 bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-md cursor-pointer transition flex justify-between items-center" data-id="' + id + '">';
+                            html += '<span class="font-semibold text-gray-800">📄 ' + label + '</span>';
+                            html += '<span class="text-blue-600 font-medium text-[11px] underline">View Details →</span>';
+                            html += '</div>';
+                        });
+                    }
+                    html += '</div>';
+                    legendModalContent.innerHTML = html;
+
+                    var cards = legendModalContent.querySelectorAll('.legend-article-card');
+                    cards.forEach(function(card) {
+                        card.addEventListener('click', function() {
+                            var id = card.getAttribute('data-id');
+                            var nodeObj = nodeStore[id];
+                            if (nodeObj) {
+                                showNodeModal(nodeObj.label, nodeObj.rawInformation);
+                            }
+                        });
+                    });
+                }
+            }
+
             function handleJsonUpload(event) {
                 var file = event.target.files[0];
                 if (!file) return;
@@ -357,6 +715,7 @@ Store the result in json file.</textarea>
                             alert('Invalid structure: File must contain "nodes" and "edges" arrays.');
                             return;
                         }
+                        rawGraphData = parsedData;
                         processAndRenderGraph(parsedData);
                     } catch (err) {
                         alert('Error reading JSON: ' + err.message);
@@ -367,12 +726,16 @@ Store the result in json file.</textarea>
 
             function processAndRenderGraph(rawData) {
                 state.hasData = true;
+                nodeStore = {};
+                conceptMap = {};
+                theoryMap = {};
+                allEdgesStore = rawData.edges;
 
                 var labelMap = {};
 
                 var formattedNodes = rawData.nodes.map(function(node) {
                     labelMap[node.id] = node.label || node.id;
-                    return {
+                    var nodeData = {
                         id: node.id,
                         label: node.label || node.id,
                         shape: 'dot',
@@ -381,6 +744,8 @@ Store the result in json file.</textarea>
                         font: { size: 12, face: 'sans-serif' },
                         rawInformation: node.information || '<p>No details available.</p>'
                     };
+                    nodeStore[node.id] = nodeData;
+                    return nodeData;
                 });
 
                 var formattedEdges = [];
@@ -400,7 +765,15 @@ Store the result in json file.</textarea>
                             color: { color: '#3b82f6' },
                             smooth: { type: 'curvedCW', roundness: 0.1 }
                         });
+
+                        var concepts = edge.shared_concepts.split(/[,;]/).map(function(s) { return s.trim(); }).filter(Boolean);
+                        concepts.forEach(function(c) {
+                            if (!conceptMap[c]) conceptMap[c] = new Set();
+                            conceptMap[c].add(fromId);
+                            conceptMap[c].add(toId);
+                        });
                     }
+
                     if (edge.shared_claims && edge.shared_claims.trim() !== "") {
                         formattedEdges.push({
                             id: 'edge_' + (edgeIdCounter++),
@@ -412,6 +785,7 @@ Store the result in json file.</textarea>
                             smooth: { type: 'curvedCW', roundness: 0.2 }
                         });
                     }
+
                     if (edge.shared_theories && edge.shared_theories.trim() !== "") {
                         formattedEdges.push({
                             id: 'edge_' + (edgeIdCounter++),
@@ -422,7 +796,15 @@ Store the result in json file.</textarea>
                             color: { color: '#f59e0b' },
                             smooth: { type: 'curvedCW', roundness: 0.3 }
                         });
+
+                        var theories = edge.shared_theories.split(/[,;]/).map(function(s) { return s.trim(); }).filter(Boolean);
+                        theories.forEach(function(t) {
+                            if (!theoryMap[t]) theoryMap[t] = new Set();
+                            theoryMap[t].add(fromId);
+                            theoryMap[t].add(toId);
+                        });
                     }
+
                     if (edge.contradictory_claims && edge.contradictory_claims.trim() !== "") {
                         formattedEdges.push({
                             id: 'edge_' + (edgeIdCounter++),
@@ -457,7 +839,6 @@ Store the result in json file.</textarea>
 
                 networkInstance = new vis.Network(canvasContainer, data, options);
 
-                // Handle Node Click -> Show Node Details Modal
                 networkInstance.on('selectNode', function(params) {
                     var selectedId = params.nodes[0];
                     var selectedNode = nodesDataSet.get(selectedId);
@@ -466,7 +847,6 @@ Store the result in json file.</textarea>
                     }
                 });
 
-                // Handle Edge Click -> Show Edge Details Modal
                 networkInstance.on('click', function(params) {
                     if (params.nodes.length === 0 && params.edges.length > 0) {
                         var clickedEdgeId = params.edges[0];
