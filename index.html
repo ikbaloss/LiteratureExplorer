@@ -236,20 +236,22 @@
             
             <div class="p-5 overflow-y-auto text-xs">
                 <p class="text-gray-500 mb-2">Copy this prompt to instruct an AI model to structure research data into compatible JSON:</p>
-                <textarea id="prompt-content" readonly class="w-full h-64 p-3 font-mono text-xs bg-gray-50 text-gray-800 rounded-md border border-gray-300 focus:outline-none resize-none leading-relaxed">Generate a graph represented in JSON format.
+                <textarea id="prompt-content" readonly class="w-full h-64 p-3 font-mono text-xs bg-gray-50 text-gray-800 rounded-md border border-gray-300 focus:outline-none resize-none leading-relaxed">Generate a graph represented in JSON format. Ensure all specified data types are strictly followed.
 
-**Nodes:** Represent individual sources (e.g., articles, news stories, academic papers). The information extracted as content for a node is title, author, abstract, and main findings. This information is put in a HTML table. The label of node is `label`, while the information of a node, such as title, author, abstract, and main findings is put in `information`.
-**Edges:** Each pair of nodes can be connected by more than one of the following four types: 
+**Nodes:** Represent individual sources (e.g., articles, news stories, academic papers). The information extracted as content for a node is title, author, abstract, and main findings formatted inside an HTML table string. 
+- `id`: Unique identifier for the node (string).
+- `label`: Short label/name for the node (string).
+- `information`: The HTML table containing title, author, abstract, and main findings (string).
 
-1. `shared_concepts`: Topics or terminology common to both sources (e.g., "epistemic injustice"). Each pair of nodes can have more than one shared_concepts or none.
-    
-2. `shared_claims`: Supporting or aligned arguments between sources (e.g., Node A: "social media promotes democratization" vs. Node B: "Instagram enhances democracy"). A pair may share multiple claims.
-    
-3. `contradictory_claims`: Opposing or conflicting arguments between sources (e.g., Node A: "social media promotes democratization" vs. Node B: "Instagram weakens freedom of expression"). A pair may have multiple contradictory claims.
-    
-4. `shared_theories`: Theoretical frameworks applied by both sources (e.g., Habermas’s deliberative democracy).
+**Edges:** Each pair of nodes can be connected by an edge containing the following fields:
+- `source` (or `from`): The source node ID (string).
+- `target` (or `to`): The target node ID (string).
+- `shared_concepts`: Topics or terminology common to both sources. FORMAT REQUIREMENT: Must be a single comma-separated string (e.g., "epistemic injustice, digital democracy"). Leave empty string ("") if none.
+- `shared_claims`: Supporting or aligned arguments between sources formatted as a single descriptive text string (e.g., "Social media platforms actively enhance public political discourse"). Leave empty string ("") if none.
+- `contradictory_claims`: Opposing or conflicting arguments between sources formatted as a single descriptive text string. Leave empty string ("") if none.
+- `shared_theories`: Theoretical frameworks applied by both sources. FORMAT REQUIREMENT: Must be a single comma-separated string (e.g., "Habermas’s deliberative democracy, Network Society"). Leave empty string ("") if none.
 
-Store the result in json file.</textarea>
+Store the result strictly in a valid JSON file structure with top-level "nodes" and "edges" arrays.</textarea>
             </div>
 
             <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
