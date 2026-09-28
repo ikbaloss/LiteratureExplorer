@@ -119,6 +119,15 @@
                         </div>
                         <span class="text-[10px] bg-rose-200 text-rose-800 px-2 py-0.5 rounded font-medium">Overview →</span>
                     </div>
+
+                    <!-- Shared Questions -->
+                    <div id="legend-questions-btn" class="p-2.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg cursor-pointer transition flex items-center justify-between group">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="w-3 h-3 rounded-full bg-violet-500 inline-block"></span>
+                            <span class="text-xs font-semibold text-violet-900 group-hover:underline">Shared Questions</span>
+                        </div>
+                        <span class="text-[10px] bg-violet-200 text-violet-800 px-2 py-0.5 rounded font-medium">Overview →</span>
+                    </div>
                 </div>
             </div>
 
@@ -255,6 +264,7 @@
 - `id`: Unique identifier for the node (string).
 - `label`: Short label/name for the node (string).
 - `information`: The HTML table containing title, author, abstract, and main findings (string).
+- `type`: The research type of the source (string). Must be exactly one of: "qualitative_research", "quantitative_research", "review_paper", "other".
 
 **Edges:** Each pair of nodes can be connected by an edge containing the following fields:
 - `source` (or `from`): The source node ID (string).
@@ -263,6 +273,8 @@
 - `shared_claims`: Supporting or aligned arguments between sources formatted as a single descriptive text string (e.g., "Social media platforms actively enhance public political discourse"). Leave empty string ("") if none.
 - `contradictory_claims`: Opposing or conflicting arguments between sources formatted as a single descriptive text string. Leave empty string ("") if none.
 - `shared_theories`: Theoretical frameworks applied by both sources. FORMAT REQUIREMENT: Must be a single comma-separated string (e.g., "Habermas’s deliberative democracy, Network Society"). Leave empty string ("") if none.
+
+- `shared_questions`: Research questions addressed by both sources. FORMAT REQUIREMENT: Must be a single string with individual questions separated by semicolons (e.g., "How does social media affect political participation?; What role do algorithms play in polarisation?"). Leave empty string ("") if none.
 
 Store the result strictly in a valid JSON file structure with top-level "nodes" and "edges" arrays.</textarea>
             </div>
@@ -284,8 +296,10 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
             var theoryMap = {};
             var sharedClaimMap = {};
             var contradictoryClaimMap = {};
+            var questionMap = {};
             var nodeStore = {};
             var allEdgesStore = [];
+            var edgesDataSetRef = null;
 
             var state = reactive({
                 hasData: false,
@@ -296,7 +310,7 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                 promptModalOpen: false,
                 legendModalOpen: false,
                 claimSearchModalOpen: false,
-                legendType: '', // 'concepts', 'theories', 'shared_claims', 'contradictory_claims'
+                legendType: '', // 'concepts', 'theories', 'shared_claims', 'contradictory_claims', 'shared_questions'
                 sortColumn: 'count', 
                 sortAsc: false, 
                 selectedItem: null, 
@@ -345,6 +359,7 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
             var legendTheoriesBtn = document.getElementById('legend-theories-btn');
             var legendSharedClaimsBtn = document.getElementById('legend-shared-claims-btn');
             var legendContradictoryClaimsBtn = document.getElementById('legend-contradictory-claims-btn');
+            var legendQuestionsBtn = document.getElementById('legend-questions-btn');
 
             var citeLinkBtn = document.getElementById('cite-link-btn');
             var citeModal = document.getElementById('cite-modal');
@@ -376,6 +391,29 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                 var str = String(val).trim();
                 if (!str) return [];
                 return str.split(/[,;]/).map(function(s) { return s.trim(); }).filter(Boolean);
+            }
+
+            // Helper to split shared questions (separated by semicolons, newlines, or after a question mark)
+            function parseQuestions(val) {
+                if (!val) return [];
+                if (Array.isArray(val)) {
+                    return val.map(function(s) { return String(s).trim(); }).filter(Boolean);
+                }
+                var str = String(val).trim();
+                if (!str) return [];
+                return str.split(/;|\n|(?<=\?)\s+/).map(function(s) { return s.trim(); }).filter(Boolean);
+            }
+
+            // Node colors by research type
+            var NODE_TYPE_COLORS = {
+                qualitative_research: { background: '#22c55e', border: '#15803d' }, // green
+                quantitative_research: { background: '#ef4444', border: '#b91c1c' }, // red
+                review_paper: { background: '#facc15', border: '#a16207' }, // yellow
+                other: { background: '#9ca3af', border: '#4b5563' } // grey
+            };
+            function getNodeColor(type) {
+                var key = String(type || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+                return NODE_TYPE_COLORS[key] || NODE_TYPE_COLORS.other;
             }
 
             watch(() => {
@@ -421,7 +459,8 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
             closeClaimSearchModalBtn.addEventListener('click', function() { state.claimSearchModalOpen = false; });
             claimSearchModalOkBtn.addEventListener('click', function() { state.claimSearchModalOpen = false; });
 
-            legendConceptsBtn.addEventListener('click', function() {
+            legendConceptsBtn.querySelector(':scope > span:last-child').addEventListener('click', function(ev) {
+                ev.stopPropagation();
                 if (!state.hasData) { alert('Please upload a JSON dataset first.'); return; }
                 state.legendType = 'concepts';
                 state.sortColumn = 'count';
@@ -430,7 +469,8 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                 state.legendModalOpen = true;
             });
 
-            legendTheoriesBtn.addEventListener('click', function() {
+            legendTheoriesBtn.querySelector(':scope > span:last-child').addEventListener('click', function(ev) {
+                ev.stopPropagation();
                 if (!state.hasData) { alert('Please upload a JSON dataset first.'); return; }
                 state.legendType = 'theories';
                 state.sortColumn = 'count';
@@ -439,7 +479,8 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                 state.legendModalOpen = true;
             });
 
-            legendSharedClaimsBtn.addEventListener('click', function() {
+            legendSharedClaimsBtn.querySelector(':scope > span:last-child').addEventListener('click', function(ev) {
+                ev.stopPropagation();
                 if (!state.hasData) { alert('Please upload a JSON dataset first.'); return; }
                 state.legendType = 'shared_claims';
                 state.sortColumn = 'count';
@@ -448,13 +489,59 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                 state.legendModalOpen = true;
             });
 
-            legendContradictoryClaimsBtn.addEventListener('click', function() {
+            legendContradictoryClaimsBtn.querySelector(':scope > span:last-child').addEventListener('click', function(ev) {
+                ev.stopPropagation();
                 if (!state.hasData) { alert('Please upload a JSON dataset first.'); return; }
                 state.legendType = 'contradictory_claims';
                 state.sortColumn = 'count';
                 state.sortAsc = false;
                 state.selectedItem = null;
                 state.legendModalOpen = true;
+            });
+
+            legendQuestionsBtn.querySelector(':scope > span:last-child').addEventListener('click', function(ev) {
+                ev.stopPropagation();
+                if (!state.hasData) { alert('Please upload a JSON dataset first.'); return; }
+                state.legendType = 'shared_questions';
+                state.sortColumn = 'count';
+                state.sortAsc = false;
+                state.selectedItem = null;
+                state.legendModalOpen = true;
+            });
+
+            // Toggle edge visibility by clicking a relationship legend row
+            var hiddenEdgeTypes = {};
+            var legendToggleMap = [
+                { btn: legendConceptsBtn, type: 'Shared Concepts' },
+                { btn: legendSharedClaimsBtn, type: 'Shared Claims' },
+                { btn: legendTheoriesBtn, type: 'Shared Theories' },
+                { btn: legendContradictoryClaimsBtn, type: 'Contradictory Claims' },
+                { btn: legendQuestionsBtn, type: 'Shared Questions' }
+            ];
+
+            function applyLegendStyle(btn, hidden) {
+                btn.classList.toggle('opacity-50', hidden);
+                var label = btn.querySelector('span.text-xs');
+                if (label) label.classList.toggle('line-through', hidden);
+            }
+
+            function resetEdgeToggles() {
+                hiddenEdgeTypes = {};
+                legendToggleMap.forEach(function(item) { applyLegendStyle(item.btn, false); });
+            }
+
+            legendToggleMap.forEach(function(item) {
+                item.btn.classList.add('select-none');
+                item.btn.setAttribute('title', 'Click to hide / show these edges');
+                item.btn.addEventListener('click', function() {
+                    if (!state.hasData || !edgesDataSetRef) { alert('Please upload a JSON dataset first.'); return; }
+                    var hide = !hiddenEdgeTypes[item.type];
+                    hiddenEdgeTypes[item.type] = hide;
+                    var updates = edgesDataSetRef.get({ filter: function(e) { return e.type === item.type; } })
+                        .map(function(e) { return { id: e.id, hidden: hide }; });
+                    edgesDataSetRef.update(updates);
+                    applyLegendStyle(item.btn, hide);
+                });
             });
 
             legendBackBtn.addEventListener('click', function() {
@@ -642,6 +729,8 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                     map = theoryMap; colName = 'Theory'; badgeColor = 'bg-amber-100 text-amber-800'; titlePrefix = 'Shared Theories Frequency';
                 } else if (type === 'shared_claims') {
                     map = sharedClaimMap; colName = 'Claim'; badgeColor = 'bg-emerald-100 text-emerald-800'; titlePrefix = 'Shared Claims Frequency';
+                } else if (type === 'shared_questions') {
+                    map = questionMap; colName = 'Question'; badgeColor = 'bg-violet-100 text-violet-800'; titlePrefix = 'Shared Questions Frequency';
                 } else {
                     map = contradictoryClaimMap; colName = 'Contradiction'; badgeColor = 'bg-rose-100 text-rose-800'; titlePrefix = 'Contradictory Claims Frequency';
                 }
@@ -764,6 +853,7 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                 theoryMap = {};
                 sharedClaimMap = {};
                 contradictoryClaimMap = {};
+                questionMap = {};
                 allEdgesStore = rawData.edges;
 
                 var labelMap = {};
@@ -775,7 +865,7 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                         label: node.label || node.id,
                         shape: 'dot',
                         size: 20,
-                        color: { background: '#3b82f6', border: '#1d4ed8' },
+                        color: getNodeColor(node.type),
                         font: { size: 12, face: 'sans-serif' },
                         rawInformation: node.information || '<p>No details available.</p>'
                     };
@@ -881,10 +971,35 @@ Store the result strictly in a valid JSON file structure with top-level "nodes" 
                             contradictoryClaimMap[cc].add(toId);
                         });
                     }
+
+                    // 5. Shared Questions Edge
+                    var questionsList = parseQuestions(edge.shared_questions);
+                    if (questionsList.length > 0) {
+                        var questionsStr = questionsList.join('\n');
+                        formattedEdges.push({
+                            id: 'edge_' + (edgeIdCounter++),
+                            from: fromId, to: toId,
+                            type: 'Shared Questions',
+                            badgeStyle: 'bg-violet-100 text-violet-800',
+                            detailText: questionsStr,
+                            label: questionsList.length + (questionsList.length === 1 ? ' question' : ' questions'),
+                            font: { size: 10, background: '#ffffff', strokeWidth: 2, strokeColor: '#ffffff', color: '#6d28d9' },
+                            color: { color: '#8b5cf6' },
+                            smooth: { type: 'curvedCW', roundness: 0.75 }
+                        });
+
+                        questionsList.forEach(function(q) {
+                            if (!questionMap[q]) questionMap[q] = new Set();
+                            questionMap[q].add(fromId);
+                            questionMap[q].add(toId);
+                        });
+                    }
                 });
 
                 var nodesDataSet = new vis.DataSet(formattedNodes);
                 var edgesDataSet = new vis.DataSet(formattedEdges);
+                edgesDataSetRef = edgesDataSet;
+                resetEdgeToggles();
 
                 var data = { nodes: nodesDataSet, edges: edgesDataSet };
 
